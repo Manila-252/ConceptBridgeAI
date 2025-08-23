@@ -3,7 +3,7 @@
 =======
 # 🎓 ConceptBridge AI — Hackathon Repo
 
-Fast, demo-ready scaffold with **backend/app** (FastAPI) and **frontend/src** (React + Vite + TS).
+Fast, demo-ready scaffold with **backend/app** (FastAPI) and **frontend/src** (React  + TS).
 
 ## Quickstart
 ```bash
@@ -62,11 +62,11 @@ make app
 ## Team & Roles (fill in)
 | Name | Role | Responsibilities |
 |------|------|------------------|
-| _Product Lead_ | PM/Demo | MVP scope, narrative, live demo |
-| _Backend_ | API/LLM orchestration | Endpoints, model calls, scoring |
+
+| _Backend_+Integration | API/LLM orchestration | Endpoints, model calls, scoring |
 | _Frontend_ | UI/UX | Screens, forms, API wiring |
 | _ML_ | Modeling | Prompting, rubrics, evaluation |
-| _DevOps_ | CI/CD | Actions, deploy |
+
 
 ## License
 MIT
