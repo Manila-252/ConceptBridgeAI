@@ -1,0 +1,41 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Smoke test
+        run: |
+          python - <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("app.main", "backend/app/main.py")
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+assert callable(mod.root)
+print("backend ok")
+PY
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build
+        run: |
+          cd frontend
+          npm ci || npm i
+          npm run build
