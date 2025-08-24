@@ -1,11 +1,9 @@
-<<<<<<< HEAD
-# ConceptBridgeAI
-=======
 # 🎓 ConceptBridge AI — Hackathon Repo
 
-Fast, demo-ready scaffold with **backend/app** (FastAPI) and **frontend/src** (React  + TS).
+Fast, demo-ready scaffold with **backend/app** (FastAPI) and **frontend/src** (React + TS).
 
 ## Quickstart
+
 ```bash
 # Terminal A (backend)
 cd backend
@@ -18,13 +16,16 @@ cd frontend
 npm i
 npm run dev                    # http://127.0.0.1:5173
 ```
+
 Or from the root:
+
 ```bash
 make api
 make app
 ```
 
 ## Structure
+
 ```
 .
 ├─ backend/
@@ -54,20 +55,21 @@ make app
 ```
 
 ## Endpoints (demo)
+
 - `GET /` health
 - `POST /echo { message }`
 - `POST /predict { prompt }`
 - `POST /assess { answer, rubric }`
 
 ## Team & Roles (fill in)
+
 | Name | Role | Responsibilities |
-|------|------|------------------|
+| ---- | ---- | ---------------- |
 
 | _Backend_+Integration | API/LLM orchestration | Endpoints, model calls, scoring |
 | _Frontend_ | UI/UX | Screens, forms, API wiring |
 | _ML_ | Modeling | Prompting, rubrics, evaluation |
 
-
 ## License
+
 MIT
->>>>>>> f8d7c78 (inital commit to create a shared repo: ConceptBridge AI)
