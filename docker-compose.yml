@@ -46,6 +46,17 @@ services:
         'python init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload',
       ]
 
+  frontend:
+    build: ./frontend
+    container_name: frontend_app
+    restart: always
+    ports:
+      - '3000:80'
+    networks:
+      - backend_network
+    volumes:
+      - ./frontend:/app
+
 volumes:
   postgres_data:
 
