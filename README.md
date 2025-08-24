@@ -1,4 +1,4 @@
-# 🧠 ConceptBridge AI — AI-Powered Adaptive Learning System
+# 🧠 ConceptBridge AI — The Learning tool that gets you
 
 **Nepal-US AI Hackathon 2025 Submission**
 
