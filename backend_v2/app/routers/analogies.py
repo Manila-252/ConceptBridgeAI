@@ -1,3 +1,4 @@
+# app/routers/analogies.py
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -86,7 +87,7 @@ async def generate_personalized_analogy(
             db.refresh(session)
         
         # Generate analogy using AI
-        logger.info(f"Generating analogy: {profession.name} -> {concept_name}")
+        logger.info(f"Generating analogy: {profession.name} -> {concept_name} (tokens: {request.max_tokens}, format: {request.response_format})")
         
         analogy_title, analogy_explanation, examples, generation_time = analogy_service.generate_analogy(
             profession=profession.name,
@@ -94,7 +95,9 @@ async def generate_personalized_analogy(
             concept_description=concept_description,
             topic_context=topic.name,
             difficulty_level=request.difficulty_preference,
-            creativity_level=request.creative_level
+            creativity_level=request.creative_level,
+            max_tokens=request.max_tokens,
+            response_format=request.response_format
         )
         
         # Store generated analogy
@@ -140,6 +143,182 @@ async def generate_personalized_analogy(
         logger.error(f"Failed to generate analogy: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve session analogies"
+        )
+
+@router.post("/feedback", response_model=dict)
+async def submit_analogy_feedback(feedback: AnalogyFeedback, db: Session = Depends(get_db)):
+    """
+    Submit user feedback on a generated analogy
+    
+    This helps improve future analogy generation by learning what works well.
+    """
+    try:
+        analogy = db.query(GeneratedAnalogy).filter(GeneratedAnalogy.id == feedback.analogy_id).first()
+        if not analogy:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Analogy {feedback.analogy_id} not found"
+            )
+        
+        # Update analogy with feedback
+        analogy.user_rating = feedback.user_rating
+        
+        # Calculate understanding score based on rating and feedback
+        understanding_score = feedback.user_rating / 5.0
+        if feedback.understanding_improved:
+            understanding_score = min(understanding_score + 0.2, 1.0)
+        
+        analogy.understanding_score = understanding_score
+        
+        db.commit()
+        
+        logger.info(f"Received feedback for analogy {feedback.analogy_id}: {feedback.user_rating}/5 stars")
+        
+        return {
+            "message": "Feedback submitted successfully",
+            "analogy_id": feedback.analogy_id,
+            "rating": feedback.user_rating,
+            "understanding_score": understanding_score
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to submit feedback: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to submit feedback"
+        )
+
+@router.get("/analytics/popular-combinations", response_model=List[dict])
+async def get_popular_analogy_combinations(db: Session = Depends(get_db)):
+    """
+    Get analytics on most popular profession-topic combinations
+    
+    Useful for understanding which analogies work best and for what audiences.
+    """
+    try:
+        from sqlalchemy import func
+        
+        query = db.query(
+            Profession.name.label("profession"),
+            Topic.name.label("topic"),
+            func.count(GeneratedAnalogy.id).label("analogy_count"),
+            func.avg(GeneratedAnalogy.user_rating).label("avg_rating"),
+            func.avg(GeneratedAnalogy.understanding_score).label("avg_understanding")
+        ).join(
+            LearningSession, GeneratedAnalogy.session_id == LearningSession.id
+        ).join(
+            Profession, LearningSession.profession_id == Profession.id
+        ).join(
+            Topic, LearningSession.topic_id == Topic.id
+        ).group_by(
+            Profession.name, Topic.name
+        ).order_by(
+            func.count(GeneratedAnalogy.id).desc()
+        ).limit(20).all()
+        
+        results = []
+        for row in query:
+            results.append({
+                "profession": row.profession,
+                "topic": row.topic,
+                "analogy_count": row.analogy_count,
+                "average_rating": round(float(row.avg_rating or 0), 2),
+                "average_understanding_score": round(float(row.avg_understanding or 0), 2)
+            })
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Failed to get analogy analytics: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve analytics"
+        )
+
+@router.get("/examples", response_model=List[dict])
+async def get_analogy_examples():
+    """
+    Get example analogies for demo purposes
+    
+    Shows the power of ConceptBridge with pre-crafted examples
+    """
+    examples = [
+        {
+            "profession": "Gaming",
+            "concept": "Recursion",
+            "analogy_title": "Recursion is Like Dungeon Crawling with Nested Instances",
+            "preview": "Just like how some RPGs have dungeons that contain smaller dungeons, recursion is a function that calls itself to solve smaller versions of the same problem...",
+            "difficulty": "intermediate",
+            "rating": 4.8
+        },
+        {
+            "profession": "Cooking",
+            "concept": "Binary Trees",
+            "analogy_title": "Binary Trees are Like Recipe Organization Systems",
+            "preview": "Imagine organizing your recipes where each main category can only have two subcategories - like 'Quick Meals' splitting into 'Under 15 min' and 'Under 30 min'...",
+            "difficulty": "beginner",
+            "rating": 4.6
+        },
+        {
+            "profession": "Sports",
+            "concept": "Hash Tables",
+            "analogy_title": "Hash Tables Work Like Team Position Assignments",
+            "preview": "Think of assigning players to positions using their jersey numbers. A hash function is like a formula that determines which position a player goes to...",
+            "difficulty": "intermediate",
+            "rating": 4.5
+        },
+        {
+            "profession": "Music",
+            "concept": "Dynamic Programming",
+            "analogy_title": "Dynamic Programming is Like Building Musical Arrangements",
+            "preview": "When composing a symphony, you don't rewrite the entire piece every time. You build upon previous sections, reusing themes and motifs...",
+            "difficulty": "advanced",
+            "rating": 4.9
+        },
+        {
+            "profession": "Business",
+            "concept": "Graph Traversal",
+            "analogy_title": "Graph Traversal is Like Organizational Network Analysis",
+            "preview": "Imagine mapping out how information flows through your company. Graph traversal algorithms are like systematic ways to visit every department...",
+            "difficulty": "intermediate",
+            "rating": 4.4
+        }
+    ]
+    
+    return examples
+
+@router.get("/health", response_model=dict)
+async def analogy_service_health():
+    """Health check for the analogy generation service"""
+    try:
+        # Test AI service
+        test_result = analogy_service.generate_quick_analogy(
+            profession="gaming",
+            concept="test",
+            creativity_level=1
+        )
+        
+        ai_status = "healthy" if test_result else "unhealthy"
+        
+        return {
+            "status": "healthy",
+            "ai_service": ai_status,
+            "model": analogy_service.model,
+            "supported_professions": list(analogy_service.profession_contexts.keys())
+        }
+        
+    except Exception as e:
+        logger.error(f"Analogy service health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "ai_service": "unhealthy",
+            "error": str(e)
+        },
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate analogy. Please try again."
         )
 
@@ -152,13 +331,15 @@ async def quick_concept_explanation(request: ConceptExplanationRequest):
     Uses profession and concept directly without requiring database IDs.
     """
     try:
-        logger.info(f"Quick explanation: {request.profession} -> {request.concept}")
+        logger.info(f"Quick explanation: {request.profession} -> {request.concept} (tokens: {request.max_tokens}, length: {request.response_length})")
         
         result = analogy_service.generate_quick_analogy(
             profession=request.profession,
             concept=request.concept,
             context=request.context or "",
-            creativity_level=request.creativity_level
+            creativity_level=request.creativity_level,
+            max_tokens=request.max_tokens,
+            response_length=request.response_length
         )
         
         return QuickAnalogyResponse(**result)
