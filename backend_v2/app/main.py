@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import logging
 from .database import engine, get_db
 from .models import Base
-from .routers import professions
+from .routers import professions, topics, analogies
 from .schemas import HealthResponse
 
 # Configure logging
@@ -16,9 +16,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Backend V2 - ConceptBridge API",
-    description="AI-Powered Adaptive Learning System Backend",
-    version="2.0.0",
+    title="ConceptBridge API - AI-Powered Learning",
+    description="Generate personalized analogies to bridge the gap between what you know and what you want to learn",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -34,8 +34,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(professions.router, prefix="/api/v1")
-from .routers import topics
 app.include_router(topics.router, prefix="/api/v1")
+app.include_router(analogies.router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
@@ -49,19 +49,32 @@ async def startup_event():
 
 @app.get("/", response_model=dict)
 async def root():
-    """Root endpoint"""
+    """Root endpoint with API information"""
     return {
-        "message": "Backend V2 - ConceptBridge API is running",
-        "version": "2.0.0",
-        "docs": "/docs"
+        "message": "ConceptBridge API - AI-Powered Adaptive Learning",
+        "version": "2.1.0",
+        "features": [
+            "Personalized analogies using AI",
+            "Profession-based learning paths",
+            "Topics and subtopics management",
+            "Learning session tracking",
+            "Analogy feedback system"
+        ],
+        "docs": "/docs",
+        "endpoints": {
+            "professions": "/api/v1/professions/",
+            "topics": "/api/v1/topics/",
+            "analogies": "/api/v1/analogies/",
+            "quick_explanation": "/api/v1/analogies/quick-explain"
+        }
     }
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check(db: Session = Depends(get_db)):
     """
-    Health check endpoint
+    Comprehensive health check endpoint
     
-    Checks API status and database connectivity
+    Checks API status, database connectivity, and AI service
     """
     try:
         # Test database connectivity
@@ -73,11 +86,22 @@ async def health_check(db: Session = Depends(get_db)):
     
     return HealthResponse(
         status="healthy" if db_status == "connected" else "unhealthy",
-        message="Backend V2 API is running",
+        message="ConceptBridge API with AI-powered analogies",
         database=db_status
     )
 
 @app.get("/api/v1/health")
 async def api_health():
-    """API v1 health check"""
-    return {"status": "healthy", "api_version": "v1"}
+    """API v1 health check with feature overview"""
+    return {
+        "status": "healthy",
+        "api_version": "v1",
+        "features": {
+            "professions": "5 pre-loaded professions for analogy generation",
+            "topics": "6 study topics with 30 subtopics",
+            "ai_analogies": "GPT-4 powered personalized explanations",
+            "learning_sessions": "Track user learning progress",
+            "feedback_system": "Improve analogies through user feedback"
+        },
+        "core_innovation": "AI-generated analogies that bridge professional knowledge with new concepts"
+    }

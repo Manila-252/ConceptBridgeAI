@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -51,3 +51,60 @@ class Subtopic(Base):
 
     def __repr__(self):
         return f"<Subtopic(id={self.id}, name='{self.name}', topic='{self.topic.name if self.topic else None}')>"
+    
+class LearningSession(Base):
+    """Track user learning sessions and preferences"""
+    __tablename__ = "learning_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_identifier = Column(String(100), nullable=False, index=True)  # For demo: simple string ID
+    profession_id = Column(Integer, ForeignKey("professions.id"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
+    subtopic_id = Column(Integer, ForeignKey("subtopics.id"), nullable=True)
+    
+    # Session metadata
+    session_start = Column(DateTime(timezone=True), server_default=func.now())
+    session_end = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    profession = relationship("Profession")
+    topic = relationship("Topic")
+    subtopic = relationship("Subtopic")
+    analogies = relationship("GeneratedAnalogy", back_populates="session")
+    
+    def __repr__(self):
+        return f"<LearningSession(id={self.id}, user='{self.user_identifier}', profession='{self.profession.name if self.profession else None}')>"   
+    
+class GeneratedAnalogy(Base):
+    """Store AI-generated analogies for reuse and improvement"""
+    __tablename__ = "generated_analogies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("learning_sessions.id"), nullable=False)
+    
+    # What was explained
+    concept_name = Column(String(200), nullable=False)
+    concept_description = Column(Text, nullable=False)
+    
+    # How it was explained
+    analogy_title = Column(String(300), nullable=False)
+    analogy_explanation = Column(Text, nullable=False)
+    analogy_examples = Column(Text, nullable=True)  # JSON string of examples
+    
+    # AI metadata
+    ai_model_used = Column(String(50), default="gpt-4")
+    generation_time_seconds = Column(Float, nullable=True)
+    prompt_template_version = Column(String(20), default="v1.0")
+    
+    # Quality metrics
+    user_rating = Column(Integer, nullable=True)  # 1-5 stars
+    understanding_score = Column(Float, nullable=True)  # AI-assessed comprehension
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship
+    session = relationship("LearningSession", back_populates="analogies")
+    
+    def __repr__(self):
+        return f"<GeneratedAnalogy(id={self.id}, concept='{self.concept_name}', title='{self.analogy_title[:50]}...')>"     

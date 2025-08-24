@@ -1,7 +1,7 @@
 import logging
 import time
 from app.database import SessionLocal, engine, create_db_engine
-from app.models import Base, Profession, Topic, Subtopic
+from app.models import Base, Profession, Topic, Subtopic, LearningSession, GeneratedAnalogy
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
