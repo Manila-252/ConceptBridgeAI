@@ -1,3 +1,4 @@
+# app/schemas.py - Complete schemas with token management
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List, Dict, Any
@@ -8,6 +9,7 @@ class DifficultyLevel(str, Enum):
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
 
+# Profession Schemas (existing)
 class ProfessionBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Profession name")
     description: Optional[str] = Field(None, max_length=1000, description="Profession description")
@@ -65,11 +67,6 @@ class SubtopicResponse(SubtopicBase):
 class TopicWithSubtopics(TopicResponse):
     subtopics: List[SubtopicResponse] = []
 
-class HealthResponse(BaseModel):
-    status: str
-    message: str
-    database: str
-    
 # Analogy System Schemas
 class AnalogyRequest(BaseModel):
     """Request to generate a personalized analogy"""
@@ -81,6 +78,17 @@ class AnalogyRequest(BaseModel):
     concept_description: Optional[str] = Field(None, description="Custom concept description")
     difficulty_preference: Optional[str] = Field("intermediate", description="Preferred difficulty level")
     creative_level: Optional[int] = Field(3, ge=1, le=5, description="Creativity level 1-5 (5 = most creative)")
+    max_tokens: Optional[int] = Field(2000, ge=500, le=4000, description="Maximum tokens for AI response")
+    response_format: Optional[str] = Field("detailed", description="Response format: 'concise', 'detailed', 'comprehensive'")
+
+class ConceptExplanationRequest(BaseModel):
+    """Simplified request for quick concept explanations"""
+    profession: str = Field(..., description="User's profession (e.g., 'gaming', 'cooking')")
+    concept: str = Field(..., description="Concept to explain (e.g., 'recursion', 'binary trees')")
+    context: Optional[str] = Field(None, description="Additional context or specific aspect to focus on")
+    creativity_level: Optional[int] = Field(3, ge=1, le=5, description="How creative should the analogy be?")
+    max_tokens: Optional[int] = Field(1500, ge=300, le=3000, description="Maximum tokens for response")
+    response_length: Optional[str] = Field("medium", description="Response length: 'short', 'medium', 'long'")
 
 class AnalogyExample(BaseModel):
     """Individual example within an analogy"""
@@ -137,13 +145,6 @@ class AnalogyFeedback(BaseModel):
     feedback_text: Optional[str] = Field(None, max_length=1000, description="Optional feedback text")
     understanding_improved: bool = Field(..., description="Did this analogy improve understanding?")
 
-class ConceptExplanationRequest(BaseModel):
-    """Simplified request for quick concept explanations"""
-    profession: str = Field(..., description="User's profession (e.g., 'gaming', 'cooking')")
-    concept: str = Field(..., description="Concept to explain (e.g., 'recursion', 'binary trees')")
-    context: Optional[str] = Field(None, description="Additional context or specific aspect to focus on")
-    creativity_level: Optional[int] = Field(3, ge=1, le=5, description="How creative should the analogy be?")
-
 class QuickAnalogyResponse(BaseModel):
     """Quick analogy response without database storage"""
     concept: str
@@ -154,3 +155,11 @@ class QuickAnalogyResponse(BaseModel):
     key_connections: List[str] = []
     next_steps: List[str] = []
     generation_time: float
+    tokens_allocated: Optional[int] = None
+    response_length: Optional[str] = None
+
+# Health check schema
+class HealthResponse(BaseModel):
+    status: str
+    message: str
+    database: str
