@@ -44,7 +44,7 @@ def seed_professions():
             logger.info(f"⚠️  Database already has {existing_count} professions. Skipping seed.")
             return True
         
-        # Define the 5 initial professions based on your proposal
+        # Define the 5 initial professions
         professions_data = [
             {
                 "name": "Cooking",
@@ -75,10 +75,7 @@ def seed_professions():
         db.add_all(professions)
         db.commit()
         
-        logger.info("✅ Successfully seeded 5 professions:")
-        for profession in professions:
-            logger.info(f"   - {profession.name}")
-            
+        logger.info("✅ Successfully seeded 5 professions")
         return True
         
     except Exception as e:
@@ -97,7 +94,10 @@ def seed_topics():
         existing_count = db.query(Topic).count()
         if existing_count > 0:
             logger.info(f"⚠️  Database already has {existing_count} topics. Skipping seed.")
-            return True
+            # Still need to return topic_dict for subtopic seeding
+            topics = db.query(Topic).all()
+            topic_dict = {topic.name: topic.id for topic in topics}
+            return True, topic_dict
         
         # Define the 6 study topics
         topics_data = [
@@ -146,8 +146,11 @@ def seed_topics():
         db.add_all(topics)
         db.commit()
         
-        # Get the created topics for subtopic creation
-        db.refresh_all()
+        # Refresh objects to get their IDs
+        for topic in topics:
+            db.refresh(topic)
+        
+        # Create topic_dict for subtopic creation
         topic_dict = {topic.name: topic.id for topic in topics}
         
         logger.info("✅ Successfully seeded 6 topics")
@@ -285,22 +288,31 @@ def main():
         logger.error("💀 Failed to create tables, exiting...")
         return False
     
-    # Seed data
+    # Seed professions
     if not seed_professions():
         logger.error("💀 Failed to seed professions, exiting...")
         return False
     
-    # Seed topics
-    success, topic_dict = seed_topics()
+    # Seed topics - Fixed return value handling
+    result = seed_topics()
+    if isinstance(result, tuple):
+        success, topic_dict = result
+    else:
+        success = result
+        topic_dict = {}
+    
     if not success:
         logger.error("💀 Failed to seed topics, exiting...")
         return False
     
-    # Seed subtopics
-    if not seed_subtopics(topic_dict):
-        logger.error("💀 Failed to seed subtopics, exiting...")
-        return False
-
+    # Seed subtopics only if we have topic_dict
+    if topic_dict:
+        if not seed_subtopics(topic_dict):
+            logger.error("💀 Failed to seed subtopics, exiting...")
+            return False
+    else:
+        logger.info("⚠️  No topic_dict available, skipping subtopic seeding")
+    
     # Verify setup
     if not verify_setup():
         logger.error("💀 Setup verification failed, exiting...")
