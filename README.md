@@ -2,7 +2,7 @@
 
 **Nepal-US AI Hackathon 2025 Submission**
 
-ConceptBridge revolutionizes learning by generating personalized analogies that bridge the gap between what learners already know (their professional background) and what they want to learn (complex technical concepts). Using AI, we transform abstract computer science concepts into relatable explanations tailored to each user's expertise domain.
+ConceptBridge revolutionizes learning by generating personalized analogies that bridge the gap between what learners already know (their professional background) and what they want to learn (complex technical concepts). Using AI & Prompt Engineering, we transform abstract computer science concepts into relatable explanations tailored to each user's expertise domain.
 
 ## 🎯 Problem & Solution
 
@@ -180,10 +180,11 @@ ConceptBridge provides fine-grained control over AI response generation:
 
 ## 👥 Team & Roles
 
-| Name            | Role                     | Responsibilities                                                                    |
-| --------------- | ------------------------ | ----------------------------------------------------------------------------------- |
-| [Your Name]     | Backend + AI Integration | FastAPI development, GPT-4 integration, database design, analogy generation service |
-| [Friend's Name] | Frontend + UI/UX         | React development, user interface design, API integration, user experience          |
+| Name              | Role                     | Responsibilities                                                                    |
+| ----------------- | ------------------------ | ----------------------------------------------------------------------------------- |
+| [Melvin Gurung]   | Backend + AI Integration | FastAPI development, GPT-4 integration, database design, analogy generation service |
+| [Shayar Shrestha] | Backend + AI Integration | FastAPI development, GPT-4 integration, database design, analogy generation service |
+| [Manila Aryal]    | Frontend + UI/UX         | React development, user interface design, API integration, user experience          |
 
 ## 🏆 Innovation Highlights
 
