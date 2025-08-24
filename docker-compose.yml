@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: backend_v2_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: backend_v2
+      POSTGRES_USER: backend_user
+      POSTGRES_PASSWORD: backend_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U backend_user -d backend_v2']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./backend_v2
+    container_name: backend_v2_api
+    restart: always
+    ports:
+      - '8000:8000'
+    environment:
+      - DATABASE_URL=postgresql://backend_user:backend_password@db:5432/backend_v2
+      - SECRET_KEY=your-secret-key-change-this-in-production
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-openai-key-here}
+      - ENVIRONMENT=development
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend_v2:/app
+    networks:
+      - backend_network
+    command:
+      [
+        'sh',
+        '-c',
+        'python init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload',
+      ]
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_app
+    restart: always
+    ports:
+      - '3000:80'
+    networks:
+      - backend_network
+    volumes:
+      - ./frontend:/app
+
+volumes:
+  postgres_data:
+
+networks:
+  backend_network:
+    driver: bridge
