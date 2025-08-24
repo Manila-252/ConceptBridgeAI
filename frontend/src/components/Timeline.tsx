@@ -1,38 +1,61 @@
-import { useEffect, useState } from 'react';
-
-type Item = { type: 'scenario' | 'assessment'; detail: string; ts: number }
+// src/components/Timeline.tsx
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getProfessions, Profession } from '../lib/api'
 
 export default function Timeline() {
-    const [items, setItems] = useState<Item[]>([])
+    const [professions, setProfessions] = useState<Profession[]>([])
+    const [selectedId, setSelectedId] = useState<number | null>(null)
+    const [error, setError] = useState<string | null>(null)
+    const navigate = useNavigate()
 
     useEffect(() => {
-        const k = 'cb.timeline'
-        try {
-            const data = JSON.parse(localStorage.getItem(k) || '[]')
-            setItems(data)
-        } catch { setItems([]) }
+        getProfessions()
+            .then(setProfessions)
+            .catch(err => setError(err.message))
     }, [])
 
-    function clear() {
-        localStorage.removeItem('cb.timeline')
-        setItems([])
+    const selectedProfession = professions.find(p => p.id === selectedId)
+
+    const handleContinue = () => {
+        if (selectedId !== null) {
+            navigate(`/deeper-insight?profession_id=${selectedId}`)
+        }
     }
 
     return (
-        <section className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <h2>Timeline</h2>
-                <button className="btn" onClick={clear}>Clear</button>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-                {items.length === 0 && <li>No items yet — try the Wizard</li>}
-                {items.map((it, i) => (
-                    <li key={i} style={{ marginBottom: 12 }}>
-                        <strong>{it.type}</strong> — {new Date(it.ts).toLocaleTimeString()}
-                        <pre className="pre">{it.detail}</pre>
-                    </li>
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center px-6">
+            <h2 className="text-4xl font-bold mb-6">🎯 Choose Your Profession</h2>
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+
+            <select
+                className="mb-4 px-4 py-2 text-black rounded shadow"
+                value={selectedId ?? ''}
+                onChange={e => setSelectedId(Number(e.target.value))}
+            >
+                <option value="" disabled>Select a profession</option>
+                {professions.map(p => (
+                    <option key={p.id} value={p.id}>
+                        {p.name}
+                    </option>
                 ))}
-            </ul>
-        </section>
+            </select>
+
+            {selectedProfession && (
+                <div className="bg-white bg-opacity-10 p-6 rounded-lg shadow-md mb-4 max-w-lg w-full text-center">
+                    <h3 className="text-2xl font-semibold mb-2">{selectedProfession.name}</h3>
+                    <p>{selectedProfession.description}</p>
+                </div>
+            )}
+
+            {selectedId !== null && (
+                <button
+                    onClick={handleContinue}
+                    className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-white transition"
+                >
+                    Continue
+                </button>
+            )}
+        </div>
     )
 }
