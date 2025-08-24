@@ -51,7 +51,7 @@ services:
     container_name: frontend_app
     restart: always
     ports:
-      - '3000:80'
+      - '5173:80'
     networks:
       - backend_network
     volumes:

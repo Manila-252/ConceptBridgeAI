@@ -24,7 +24,7 @@ docker-compose up --build
 # Access the application
 # API: http://localhost:8000
 # API Docs: http://localhost:8000/docs
-# Frontend: http://localhost:3000
+# Frontend: http://localhost:5173
 # Database: localhost:5432
 ```
 
@@ -41,7 +41,7 @@ uvicorn app.main:app --reload        # http://localhost:8000
 # Terminal B (Frontend)
 cd frontend
 npm install
-npm run dev                          # http://localhost:3000
+npm run dev                          # http://localhost:5173
 
 # Terminal C (Database)
 # Start PostgreSQL locally or use Docker:
