@@ -34,6 +34,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(professions.router, prefix="/api/v1")
+from .routers import topics
+app.include_router(topics.router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
